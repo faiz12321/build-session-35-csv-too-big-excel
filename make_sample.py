@@ -1,11 +1,18 @@
 """Create a fictional CSV only in a new sample folder. About 37 MB on disk."""
 from pathlib import Path
+import stat
 
 ROWS = 1_100_003
 
 
 def main():
-    folder = Path(__file__).resolve().parent / 'sample'
+    folder = Path(__file__).absolute().parent / 'sample'
+    if '..' in folder.parts:
+        raise OSError('Parent-traversal paths are unsupported.')
+    for parent in reversed(folder.parents):
+        info = parent.lstat()
+        if stat.S_ISLNK(info.st_mode) or getattr(info, 'st_file_attributes', 0) & 0x400:
+            raise OSError('Linked/reparse-point parents are unsupported.')
     try:
         folder.mkdir()
     except FileExistsError:
