@@ -1,3 +1,4 @@
+import os
 """Small temporary-fixture tests; not a proof for every CSV or filesystem."""
 import contextlib
 import csv
@@ -157,6 +158,71 @@ class Checks(unittest.TestCase):
         result=subprocess.run([sys.executable,str(p)],capture_output=True,text=True)
         self.assertEqual(result.returncode,1);self.assertEqual(keep.read_bytes(),b'KEEP')
         self.assertEqual(sorted(x.name for x in (self.root/'sample').iterdir()),['nested'])
+
+
+class PathSafety(unittest.TestCase):
+    def setUp(self):
+        self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
+        self.base=Path(self.tmp.name);self.root=self.base/'tree';self.root.mkdir()
+        self.file=self.root/'zero';self.file.write_bytes(b'')
+    def link(self,path,target,directory=False):
+        try:path.symlink_to(target,target_is_directory=directory)
+        except OSError:self.skipTest('Symlinks unavailable')
+    def code(self,path):
+        with contextlib.redirect_stdout(io.StringIO()),contextlib.redirect_stderr(io.StringIO()):
+            return bigcsv.main(['p',str(path)])
+    def test_root_alias_refuses(self):
+        p=self.base/'alias';self.link(p,self.root,True);self.assertEqual(self.code(p),1)
+    def test_ancestor_alias_refuses(self):
+        p=self.base/'alias';self.link(p,self.base,True);self.assertEqual(self.code(p/'tree'),1)
+    def test_file_alias_refuses(self):
+        p=self.base/'linked';self.link(p,self.file);self.assertEqual(self.code(p),1)
+    def test_file_hardlink_refuses(self):
+        p=self.base/'hard';os.link(self.file,p);self.assertEqual(self.code(p),1)
+    def test_file_pipe_refuses(self):
+        if not hasattr(os,'mkfifo'):self.skipTest('Unix pipe unavailable')
+        p=self.base/'pipe';os.mkfifo(p);self.assertEqual(self.code(p),1)
+    def test_file_self_loop_refuses(self):
+        p=self.base/'loop';self.link(p,p);self.assertEqual(self.code(p),1)
+    def test_file_dangling_refuses(self):
+        p=self.base/'alias';self.link(p,self.base/'missing');self.assertEqual(self.code(p),1)
+    def test_file_traversal_refuses(self):self.assertEqual(self.code(self.root/'..'/'tree'/'zero'),1)
+    def test_file_ancestor_refuses(self):
+        p=self.base/'alias';self.link(p,self.root,True);self.assertEqual(self.code(p/'zero'),1)
+    def test_metadata_error_refuses(self):
+        with mock.patch.object(Path,'lstat',side_effect=OSError('forced')):self.assertEqual(self.code(self.file),1)
+    def test_reparse_attribute_refuses(self):
+        real=Path.lstat
+        def fake(p,*a,**kw):
+            value=real(p,*a,**kw)
+            if p==self.file:return type('Reparse',(),{'st_mode':value.st_mode,'st_file_attributes':0x400})()
+            return value
+        with mock.patch.object(Path,'lstat',fake):self.assertEqual(self.code(self.file),1)
+
+
+    def test_read_error_stops(self):
+        with mock.patch.object(Path,'open',side_effect=OSError('forced')):
+            self.assertEqual(self.code(self.file),1)
+    def test_setup_alias_parent_refuses(self):
+        import make_sample
+        p=self.base/'alias';self.link(p,self.root,True)
+        with mock.patch.object(make_sample,'__file__',str(p/'make_sample.py')):
+            with self.assertRaises(OSError):make_sample.main()
+        self.assertFalse((self.root/'sample').exists())
+    def test_setup_traversal_refuses(self):
+        import make_sample
+        with mock.patch.object(make_sample,'__file__',str(self.root/'..'/'make_sample.py')):
+            with self.assertRaises(OSError):make_sample.main()
+
+    def test_output_linked_parent_refuses(self):
+        p=self.base/'alias';self.link(p,self.root,True)
+        with self.assertRaises(OSError):bigcsv.safe_output(p/'new')
+        self.assertFalse((self.root/'new').exists())
+    def test_output_traversal_refuses(self):
+        with self.assertRaises(OSError):bigcsv.safe_output(self.root/'..'/'new')
+    def test_output_metadata_error_refuses(self):
+        with mock.patch.object(Path,'lstat',side_effect=OSError('forced')):
+            with self.assertRaises(OSError):bigcsv.safe_output(self.root/'new')
 
 
 if __name__ == '__main__':
