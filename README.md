@@ -1,29 +1,19 @@
-# Split a large CSV by parsed records
+# Count CSV records and split into a new folder
 
-Python 3 standard library only. A record can span physical lines. This tool reads UTF-8 comma-separated CSV with a nonblank unique header and consistent field counts. It streams parsed records, not physical lines.
-
-## Practice
-
-Save make_sample.py, bigcsv.py and test_bigcsv.py in a new empty lesson folder.
+Save three source files in a NEW empty lesson folder.
 
     python make_sample.py
     python bigcsv.py sample/sales.csv
     python bigcsv.py sample/sales.csv --split 500000 sample/sales-parts
     python -m unittest -v
 
-Setup creates 1,100,003 fictional records plus a header, about 37 MB. Splitting uses additional disk space. Setup and output paths must be new. Existing files, folders and links are refused, never reset. Each part file is exclusively created. A failed split may leave incomplete output. Keep the original and do not use unverified parts.
+Two Windows and two Ubuntu full replays run exact visible source versions. Final 43 small fixture tests pass (Unix pipe skips on Windows); symlink creation can skip where unavailable. Displayed stdout is first Windows output, not normalized or mixed. Pair differences are unittest time.
+Only link/error changes: refuse input/ancestor symbolic links/reparse points, hardlinks, special files and traversal before CSV reads, including part verification. Output ancestors are checked before creating a NEW split folder. Read/metadata/split errors remain exit 1; usage and invalid split-size errors stay exit 2. Setup refuses linked parents/traversal and existing sample paths, without reset/deletion.
+Original strict UTF-8/BOM CSV parsing, header/row checks, record counting, split sizes, CSV serialization, ordered parsed-field digest/count verification and printed relative filenames remain unchanged. Outputs are still exclusive new files in a NEW folder. No byte-preservation, Excel import or formula-safety promise was added. Parsed field values/order are verified, not raw quoting/bytes.
+CSV is streamed, but no size/time/resource limit, atomic snapshot or hostile-race defense is provided. Stop editors/sync. Count output includes private paths; split parts contain source data. A split/write/verification failure can leave partial NEW parts; they are not deleted. Keep the source and inspect incomplete outputs; do not use them. Small fictional fixtures are not proof on every filesystem. No Excel/desktop Windows/macOS recording. Recorder removes only its own temporary fixture folder. Decisions/feedback are teaching text, not recorded output.
 
-## What is checked
+MIT code. Python separately licensed/not included.
 
-Excel permits 1,048,576 worksheet rows. One header leaves 1,048,575 data records. This is only a row-capacity check, not full Excel compatibility. No Excel application was recorded. Column limits, cell sizes, formulas, number conversion and import settings are not checked.
-
-Split output is re-serialized UTF-8 CSV with CRLF record endings. BOM, quoting and line endings can change. Verification compares ordered parsed field values and counts against a SHA-256 digest of the first source scan, including the header comparison. It does not promise byte identity. Do not modify source or output during a run. Source paths can follow links. One huge record can use substantial memory or exceed Python's CSV field limit. Empty files and blank records are rejected. Header-only input creates an empty output folder with no parts.
-
-26 temporary-fixture tests cover multiline fields, embedded CR, quotes, commas, exact parsed order, malformed input, limits, collisions and preservation of source bytes/mtime. They are limited checks, not proof for all filesystems or concurrent changes. Reports expose paths and errors may reveal data. Use fictional input and keep private output private.
-
-## Sources and license
-
-- https://support.microsoft.com/en-us/excel/excel-specifications-and-limits
-- https://docs.python.org/3/library/csv.html
-
-Code is MIT licensed; see LICENSE. Python and Excel are separate products with their own terms and are not included. No warranty.
+Reference: https://docs.python.org/3/library/os.html
+Windows paired run: https://github.com/faiz12321/lesson-lab/actions/runs/38978182023
+Ubuntu paired run: https://github.com/faiz12321/lesson-lab/actions/runs/38978370213
