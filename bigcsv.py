@@ -8,13 +8,40 @@ import hashlib
 import json
 from pathlib import Path
 import sys
+import stat
+
+
+def safe_input(value, directory=False):
+    path = Path(value).absolute()
+    if '..' in path.parts:
+        raise OSError('Parent-traversal paths are unsupported.')
+    for part in [*reversed(path.parents), path]:
+        info = part.lstat()
+        if stat.S_ISLNK(info.st_mode) or getattr(info, 'st_file_attributes', 0) & 0x400:
+            raise OSError('Links/reparse points are unsupported.')
+    info = path.lstat()
+    if directory:
+        if not stat.S_ISDIR(info.st_mode):
+            raise NotADirectoryError('Expected an ordinary directory.')
+    elif not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        raise OSError('Expected an ordinary singly linked file.')
+    return path
+
+def safe_output(value):
+    path = Path(value).absolute()
+    if '..' in path.parts:
+        raise OSError('Parent-traversal paths are unsupported.')
+    safe_input(path.parent, directory=True)
+    return Path(value)
+
+
 
 EXCEL_GRID = 1_048_576
 MAX_DATA = EXCEL_GRID - 1  # One worksheet row is used by the header.
 
 
 def read_records(path):
-    with Path(path).open('r', encoding='utf-8-sig', newline='') as handle:
+    with safe_input(path).open('r', encoding='utf-8-sig', newline='') as handle:
         reader = csv.reader(handle, strict=True)
         header = next(reader, None)
         if not header or any(not cell.strip() for cell in header):
@@ -48,7 +75,7 @@ def split(path, maximum, output, expected):
     """Write only in a newly created directory. Never reuse or reset one."""
     if not 1 <= maximum <= MAX_DATA:
         raise ValueError('split size must be 1 to %d data records' % MAX_DATA)
-    target = Path(output)
+    target = safe_output(output)
     target.mkdir()  # Atomic refusal of any existing output path.
     parts = []
     records = read_records(path)
