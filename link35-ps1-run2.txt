@@ -1,0 +1,112 @@
+### CMD: python --version
+Python 3.12.10
+### EXIT: 0
+
+### CMD: python make_sample.py
+Created sample/sales.csv with 1,100,003 fictional data records plus header.
+Setup refuses existing sample paths; use a new empty lesson folder.
+### EXIT: 0
+
+### CMD: python make_sample.py
+Stopped: sample already exists. Nothing was replaced or deleted.
+### EXIT: 1
+
+### CMD: python bigcsv.py sample/sales.csv
+CSV record count
+File: sample\sales.csv
+Data records: 1,100,003
+Worksheet rows including header: 1,100,004
+Excel worksheet row limit: 1,048,576
+Exceeds row-count limit with one header row.
+Not checked: Excel columns, cell limits, formulas, type conversions or import settings.
+Read only. --split MAX NEW_FOLDER can write new parts.
+### EXIT: 0
+
+### CMD: python bigcsv.py sample/sales.csv --split 500000 sample/sales-parts
+CSV record count
+File: sample\sales.csv
+Data records: 1,100,003
+Worksheet rows including header: 1,100,004
+Excel worksheet row limit: 1,048,576
+Exceeds row-count limit with one header row.
+Not checked: Excel columns, cell limits, formulas, type conversions or import settings.
+Wrote sample\sales-parts\part0001.csv: 500,000 data records plus header.
+Wrote sample\sales-parts\part0002.csv: 500,000 data records plus header.
+Wrote sample\sales-parts\part0003.csv: 100,003 data records plus header.
+Verified 1,100,003 ordered parsed records against the first source scan.
+Field values/order matched a SHA-256 digest; output bytes/quoting can differ.
+Source was read only. This is not a full Excel compatibility or safety check.
+### EXIT: 0
+
+### CMD: python bigcsv.py sample/sales.csv --split 500000 sample/sales-parts
+Stopped: output path already exists. Nothing there was replaced.
+CSV record count
+File: sample\sales.csv
+Data records: 1,100,003
+Worksheet rows including header: 1,100,004
+Excel worksheet row limit: 1,048,576
+Exceeds row-count limit with one header row.
+Not checked: Excel columns, cell limits, formulas, type conversions or import settings.
+### EXIT: 1
+
+### CMD: python bigcsv.py sample/sales-parts/part0001.csv
+CSV record count
+File: sample\sales-parts\part0001.csv
+Data records: 500,000
+Worksheet rows including header: 500,001
+Excel worksheet row limit: 1,048,576
+Within row-count limit only.
+Not checked: Excel columns, cell limits, formulas, type conversions or import settings.
+Read only. --split MAX NEW_FOLDER can write new parts.
+### EXIT: 0
+
+### CMD: python -m unittest -v
+test_bad_split_sizes (test_bigcsv.Checks.test_bad_split_sizes) ... ok
+test_bare_carriage_return_field_preserved (test_bigcsv.Checks.test_bare_carriage_return_field_preserved) ... ok
+test_blank_header_rejected (test_bigcsv.Checks.test_blank_header_rejected) ... ok
+test_blank_record_rejected (test_bigcsv.Checks.test_blank_record_rejected) ... ok
+test_bom_supported (test_bigcsv.Checks.test_bom_supported) ... ok
+test_changed_source_digest_is_not_verified (test_bigcsv.Checks.test_changed_source_digest_is_not_verified) ... ok
+test_count_success_is_not_excel_safety_claim (test_bigcsv.Checks.test_count_success_is_not_excel_safety_claim) ... ok
+test_duplicate_header_rejected (test_bigcsv.Checks.test_duplicate_header_rejected) ... ok
+test_empty_file_rejected_without_output (test_bigcsv.Checks.test_empty_file_rejected_without_output) ... ok
+test_existing_output_file_preserved (test_bigcsv.Checks.test_existing_output_file_preserved) ... ok
+test_existing_output_folder_and_nested_bytes_preserved (test_bigcsv.Checks.test_existing_output_folder_and_nested_bytes_preserved) ... ok
+test_extra_field_rejected (test_bigcsv.Checks.test_extra_field_rejected) ... ok
+test_header_in_every_part_and_sizes (test_bigcsv.Checks.test_header_in_every_part_and_sizes) ... ok
+test_header_only_creates_no_parts (test_bigcsv.Checks.test_header_only_creates_no_parts) ... ok
+test_header_uses_one_grid_row (test_bigcsv.Checks.test_header_uses_one_grid_row) ... ok
+test_invalid_utf8_rejected (test_bigcsv.Checks.test_invalid_utf8_rejected) ... ok
+test_last_record_without_newline (test_bigcsv.Checks.test_last_record_without_newline) ... ok
+test_missing_field_rejected (test_bigcsv.Checks.test_missing_field_rejected) ... ok
+test_missing_file (test_bigcsv.Checks.test_missing_file) ... ok
+test_multiline_quotes_commas_and_order_preserved (test_bigcsv.Checks.test_multiline_quotes_commas_and_order_preserved) ... ok
+test_record_count_not_physical_lines (test_bigcsv.Checks.test_record_count_not_physical_lines) ... ok
+test_repeat_split_does_not_replace_parts (test_bigcsv.Checks.test_repeat_split_does_not_replace_parts) ... ok
+test_setup_refusal_preserves_nested_data (test_bigcsv.Checks.test_setup_refusal_preserves_nested_data) ... ok
+test_source_bytes_and_mtime_preserved (test_bigcsv.Checks.test_source_bytes_and_mtime_preserved) ... ok
+test_unclosed_quote_rejected (test_bigcsv.Checks.test_unclosed_quote_rejected) ... ok
+test_usage_errors (test_bigcsv.Checks.test_usage_errors) ... ok
+test_ancestor_alias_refuses (test_bigcsv.PathSafety.test_ancestor_alias_refuses) ... ok
+test_file_alias_refuses (test_bigcsv.PathSafety.test_file_alias_refuses) ... ok
+test_file_ancestor_refuses (test_bigcsv.PathSafety.test_file_ancestor_refuses) ... ok
+test_file_dangling_refuses (test_bigcsv.PathSafety.test_file_dangling_refuses) ... ok
+test_file_hardlink_refuses (test_bigcsv.PathSafety.test_file_hardlink_refuses) ... ok
+test_file_pipe_refuses (test_bigcsv.PathSafety.test_file_pipe_refuses) ... skipped 'Unix pipe unavailable'
+test_file_self_loop_refuses (test_bigcsv.PathSafety.test_file_self_loop_refuses) ... ok
+test_file_traversal_refuses (test_bigcsv.PathSafety.test_file_traversal_refuses) ... ok
+test_metadata_error_refuses (test_bigcsv.PathSafety.test_metadata_error_refuses) ... ok
+test_output_linked_parent_refuses (test_bigcsv.PathSafety.test_output_linked_parent_refuses) ... ok
+test_output_metadata_error_refuses (test_bigcsv.PathSafety.test_output_metadata_error_refuses) ... ok
+test_output_traversal_refuses (test_bigcsv.PathSafety.test_output_traversal_refuses) ... ok
+test_read_error_stops (test_bigcsv.PathSafety.test_read_error_stops) ... ok
+test_reparse_attribute_refuses (test_bigcsv.PathSafety.test_reparse_attribute_refuses) ... ok
+test_root_alias_refuses (test_bigcsv.PathSafety.test_root_alias_refuses) ... ok
+test_setup_alias_parent_refuses (test_bigcsv.PathSafety.test_setup_alias_parent_refuses) ... ok
+test_setup_traversal_refuses (test_bigcsv.PathSafety.test_setup_traversal_refuses) ... ok
+
+----------------------------------------------------------------------
+Ran 43 tests in 0.165s
+
+OK (skipped=1)
+### EXIT: 0
